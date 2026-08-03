@@ -753,11 +753,13 @@ export async function chatWithAi({
       messages,
       tools: turnTools,
       tool_choice:
-        turnTools?.length && guard === 1 && explicitVisionIntent && visionItems?.length
-          ? { type: "function", function: { name: "look_at_images" } }
-          : turnTools?.length
-            ? "auto"
-            : undefined,
+        turnTools?.length && guard > 1
+          ? "none"
+          : turnTools?.length && explicitVisionIntent && visionItems?.length
+            ? { type: "function", function: { name: "look_at_images" } }
+            : turnTools?.length
+              ? "auto"
+              : undefined,
       // toxic: nhiệt cao hơn = gắt/tục hơn; chat thường giữ 0.9
       temperature: isToxicTurn ? 1.1 : 0.9,
       max_tokens: isToxicTurn ? 480 : preDeployUrl ? 1024 : 4096,
@@ -879,13 +881,35 @@ export async function chatWithAi({
     finalText = stripHugeHtml(finalText);
   }
 
+  // Một số OpenAI-compatible model trả tool result xong lại trả content rỗng.
+  // Recovery không kèm tools để buộc model tổng hợp kết quả thay vì gọi tool lặp vô hạn.
+  if (!finalText && !isToxicTurn && !preDeployUrl && !images.length) {
+    try {
+      const recovery = await createChat({
+        model: config.ai.model,
+        messages: [
+          ...messages,
+          {
+            role: "system",
+            content: "Trả lời user ngay bằng tiếng Việt dựa trên tool result vừa có. Không gọi thêm tool. Nếu tool lỗi/không thấy ảnh thì nói đúng điều đó, tuyệt đối không bịa.",
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 1800,
+      });
+      finalText = String(recovery.choices?.[0]?.message?.content || "").trim();
+      if (finalText) console.log("[ai] recovered empty tool response");
+    } catch (error) {
+      console.error("[ai recovery]", redactSecrets(error?.message || String(error)));
+    }
+  }
   if (isToxicTurn && finalText) finalText = repairRoastEnding(finalText, userId);
 
   if (!finalText) {
     if (isToxicTurn) finalText = repairRoastEnding("", userId);
     else if (preDeployUrl) finalText = `xong — web đây: ${preDeployUrl}`;
     else if (images.length) finalText = "xong — check ảnh 👇";
-    else finalText = "ờ... lag, nói lại cái.";
+    else finalText = "Model vừa trả response rỗng; gửi lại câu đó một lần giúp tao.";
   }
 
   // đảm bảo có link nếu đã deploy
