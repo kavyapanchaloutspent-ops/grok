@@ -114,8 +114,9 @@ export async function gatherIntel(message, clientUserId) {
   const seenUrls = new Set();
 
   function pushVision(url, kind, name) {
-    if (!url || seenUrls.has(url)) return;
-    seenUrls.add(url);
+    const visionKey = `${kind}:${url}`;
+    if (!url || seenUrls.has(visionKey)) return;
+    seenUrls.add(visionKey);
     visionItems.push({
       url,
       kind,
@@ -125,8 +126,15 @@ export async function gatherIntel(message, clientUserId) {
   }
 
   async function addMember(userId, kind) {
-    if (!userId || seenUsers.has(userId)) return;
+    if (!userId) return;
     if (clientUserId && userId === clientUserId) return;
+    if (seenUsers.has(userId)) {
+      if (kind === "explicit_id") {
+        const existing = profiles.find((profile) => profile.id === userId);
+        if (existing?.avatarUrl) pushVision(existing.avatarUrl, "explicit_id", existing.displayName || existing.username);
+      }
+      return;
+    }
     seenUsers.add(userId);
 
     let member = message.guild?.members?.cache?.get(userId) || null;
@@ -186,7 +194,7 @@ export async function gatherIntel(message, clientUserId) {
   // Không phụ thuộc mention nên tool luôn có đúng avatar target để xem.
   const explicitIds = [...String(message.content || "").matchAll(/(?<!\d)(\d{17,20})(?!\d)/g)]
     .map((match) => match[1])
-    .filter((id) => id !== message.author.id && id !== clientUserId)
+    .filter((id) => id !== clientUserId)
     .slice(0, 4);
   for (const id of explicitIds) {
     await addMember(id, "explicit_id");

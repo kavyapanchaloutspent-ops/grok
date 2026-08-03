@@ -584,7 +584,7 @@ async function runLookAtImagesTool(visionItems, { focus = "all", question = "" }
   } else if (focus === "author_avatar") {
     items = items.filter((i) => i.kind === "author");
   } else if (focus === "others_avatar") {
-    items = items.filter((i) => i.kind === "mentioned" || i.kind === "reply_to");
+    items = items.filter((i) => i.kind === "mentioned" || i.kind === "reply_to" || i.kind === "explicit_id");
   }
 
   if (!items.length) {
