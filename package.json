@@ -1,0 +1,29 @@
+{
+  "name": "discord-ai-modbot",
+  "version": "1.0.0",
+  "description": "Bot Discord quản lý server bằng AI — chat tự nhiên, moderation, phát hiện cười",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "moderation",
+    "ai",
+    "deepseek"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "openai": "^4.86.2",
+    "riffy": "^1.0.12",
+    "surge": "^0.24.6"
+  }
+}
