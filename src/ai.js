@@ -283,6 +283,7 @@ NHÂN CÁCH DUY NHẤT + MEMORY:
 CÔNG CỤ:
 1) look_at_images — mắt (avatar/ảnh).
    Nếu tool trả ok=false hoặc nói ảnh không tải được/không rõ: PHẢI nói không xem được; CẤM đoán avatar từ URL, thumbnail, tên file, label hay stereotype.
+   Nếu user bảo "xem lại" nhưng catalog không có đúng target cũ: hỏi họ mention hoặc gửi Discord ID; CẤM lấy avatar author rồi giả làm target khác.
 2) generate_image — vẽ FLUX. Trong bot-var có thể tự tạo ảnh/meme làm đòn đáp nếu thật sự có ý tưởng; hoàn toàn tùy chọn, không gọi cho đủ thủ tục.
 3) deploy_static_site — CHỈ khi backend chưa auto-deploy. Ưu tiên description ngắn; hệ thống gen HTML + Surge.
 4) join_voice — vào đúng phòng voice của người đang nhắn.
@@ -719,6 +720,8 @@ export async function chatWithAi({
   const historyUser = `[${userName}]: ${String(content).slice(0, 800)}`;
   pushHistory(channelId, "user", historyUser, config.historyLimit);
 
+  const explicitVisionIntent =
+    /(?:xem|soi|nhìn|check|phân tích|mô tả|đọc|nhận diện)[\s\S]{0,40}(?:ảnh|hình|avatar|\bav\b)|(?:ảnh|hình|avatar|\bav\b)[\s\S]{0,40}(?:xem|soi|nhìn|check|phân tích|mô tả|đọc|nhận diện)|\b(?:xem|soi|nhìn)\s+lại\b/i.test(String(content || ""));
   const isBotVarTurn = /\[BOT VAR/i.test(String(content || ""));
   const isToxicTurn = /\[(?:TOXIC|BOT VAR)/i.test(String(content || ""));
   const history = getHistory(channelId);
@@ -749,7 +752,12 @@ export async function chatWithAi({
       model: config.ai.model,
       messages,
       tools: turnTools,
-      tool_choice: turnTools?.length ? "auto" : undefined,
+      tool_choice:
+        turnTools?.length && guard === 1 && explicitVisionIntent && visionItems?.length
+          ? { type: "function", function: { name: "look_at_images" } }
+          : turnTools?.length
+            ? "auto"
+            : undefined,
       // toxic: nhiệt cao hơn = gắt/tục hơn; chat thường giữ 0.9
       temperature: isToxicTurn ? 1.1 : 0.9,
       max_tokens: isToxicTurn ? 480 : preDeployUrl ? 1024 : 4096,

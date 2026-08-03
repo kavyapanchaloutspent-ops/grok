@@ -22,6 +22,7 @@ const LABEL_VI = {
   author: "AVATAR CỦA NGƯỜI ĐANG NHẮN (author — người gửi tin này)",
   mentioned: "AVATAR CỦA NGƯỜI ĐƯỢC MENTION (người kia / target)",
   reply_to: "AVATAR CỦA NGƯỜI ĐƯỢC REPLY (người kia / tin gốc)",
+  explicit_id: "AVATAR CỦA DISCORD ID ĐƯỢC GÕ TRỰC TIẾP (target)",
   attachment: "ẢNH ĐÍNH KÈM TRONG TIN NHẮN (không phải avatar)",
   reply_attachment: "ẢNH TRONG TIN REPLY",
 };
@@ -154,7 +155,9 @@ export async function gatherIntel(message, clientUserId) {
             ? "NGƯỜI ĐƯỢC MENTION (người kia)"
             : kind === "reply_to"
               ? "NGƯỜI ĐƯỢC REPLY (người kia)"
-              : kind;
+              : kind === "explicit_id"
+                ? "NGƯỜI CÓ DISCORD ID ĐƯỢC GÕ TRỰC TIẾP (target)"
+                : kind;
       profiles.push(profile);
       if (profile.avatarUrl) {
         pushVision(
@@ -179,6 +182,15 @@ export async function gatherIntel(message, clientUserId) {
     await addMember(id, "mentioned");
   }
 
+  // Discord ID gõ trần trong nội dung — ví dụ "xem avatar 1433427819739873402".
+  // Không phụ thuộc mention nên tool luôn có đúng avatar target để xem.
+  const explicitIds = [...String(message.content || "").matchAll(/(?<!\d)(\d{17,20})(?!\d)/g)]
+    .map((match) => match[1])
+    .filter((id) => id !== message.author.id && id !== clientUserId)
+    .slice(0, 4);
+  for (const id of explicitIds) {
+    await addMember(id, "explicit_id");
+  }
   // Reply target
   if (message.reference?.messageId) {
     try {
