@@ -162,6 +162,6 @@ Admin trong ADMIN_USER_IDS nhắn riêng bot: `.chat nội dung`. Bot trả menu
 Staff có Manage Nicknames được đổi một member; đổi toàn server yêu cầu Administrator. Bot cần quyền Manage Nicknames và role cao hơn target. Server owner/chính bot/member không manageable sẽ được bỏ qua.
 ## OpenRouter Vision moderation
 
-Cấu hình `OPENROUTER_API_KEY` và model `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`. Khi một message có ít nhất 4 ảnh, bot dùng tối đa 4 ảnh để phân loại. Chỉ khi model kết luận MrBeast giveaway/botnet scam với confidence từ 85% bot mới xóa message và gửi embed `Đã lọc 1 MrBeast`. Nếu Vision lỗi hoặc thiếu key, bot không tự xóa.
+Cấu hình `OPENROUTER_API_KEY` và model `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`. Khi message có ảnh, bot chỉ gửi ảnh đầu tiên để phân loại nhanh. Nếu model kết luận MrBeast giveaway/botnet scam, bot xóa message ngay và gửi embed `Đã lọc 1 MrBeast` có tag người gửi. Nếu Vision lỗi hoặc thiếu key, bot không tự xóa.
 
 Reply AI dài được chia thành nhiều message liên tiếp theo ranh giới dòng/từ; file tạo ảnh chỉ đính kèm ở message đầu.

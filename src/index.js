@@ -19,7 +19,7 @@ import { initMusic, initMusicNodes, updateMusicVoiceState, joinVoice, playMusic,
 import { getBotIdentity } from "./identity.js";
 import { handleDmChatCommand, handleDmChatInteraction } from "./dm-chat.js";
 import { runDiscordInspect } from "./discord-tools.js";
-import { inspectFourImageScam } from "./scam-vision.js";
+import { inspectMrBeastScam } from "./scam-vision.js";
 
 function splitDiscordText(text, maxLength = 1900) {
   const remaining = String(text || "").trim();
@@ -89,10 +89,10 @@ client.on(Events.MessageCreate, async (message) => {
           /\.(png|jpe?g|gif|webp)(\?|$)/i.test(a.url || "")
       ) || false;
 
-    // Bộ 4 ảnh thường được chiến dịch botnet/scam đăng cùng lúc.
+    // Fast path: chỉ quét ảnh đầu tiên để chặn quảng cáo MrBeast/scam nhanh.
     // Fail-open: Vision lỗi/thiếu key thì không xóa nhầm nội dung người dùng.
-    if (!message.author.bot && message.attachments?.size >= 4) {
-      const scan = await inspectFourImageScam(message);
+    if (!message.author.bot && hasImages) {
+      const scan = await inspectMrBeastScam(message);
       if (scan.scam && message.deletable) {
         const deleted = await message.delete().then(() => true).catch(() => false);
         if (deleted) {
@@ -102,11 +102,11 @@ client.on(Events.MessageCreate, async (message) => {
               new EmbedBuilder()
                 .setColor(0xe53935)
                 .setTitle("Đã lọc 1 MrBeast")
-                .setDescription(`${detail}\nĐộ tin cậy: **${Math.round(scan.confidence * 100)}%**`)
+                .setDescription(`<@${message.author.id}> ${detail}\nĐộ tin cậy: **${Math.round(scan.confidence * 100)}%**`)
                 .setFooter({ text: `Người gửi: ${message.author.username}` })
                 .setTimestamp(),
             ],
-            allowedMentions: { parse: [] },
+            allowedMentions: { users: [message.author.id], parse: [] },
           }).catch(() => {});
         }
         return;

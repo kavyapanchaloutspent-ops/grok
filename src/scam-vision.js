@@ -21,7 +21,7 @@ function imageAttachments(message) {
       return contentType.startsWith("image/") ||
         /\.(?:png|jpe?g|gif|webp)(?:\?|$)/i.test(attachment.url || "");
     })
-    .slice(0, 4);
+    .slice(0, 1);
 }
 
 function parseJson(text) {
@@ -34,25 +34,25 @@ function parseJson(text) {
   }
 }
 
-export async function inspectFourImageScam(message) {
+export async function inspectMrBeastScam(message) {
   const api = openRouterClient();
   if (!api) return { checked: false, reason: "missing_openrouter_key" };
 
   const images = imageAttachments(message);
-  if (images.length < 4) return { checked: false, reason: "not_four_images" };
+  if (!images.length) return { checked: false, reason: "no_image" };
 
   try {
     const response = await api.chat.completions.create({
       model: config.openRouter.visionModel,
       temperature: 0,
-      max_tokens: 450,
+      max_tokens: 180,
       response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
           content: [
             "You are a strict Discord anti-scam vision classifier.",
-            "Inspect all four images together. Detect coordinated MrBeast impersonation/giveaway scams:",
+            "Inspect the image. Detect MrBeast impersonation/giveaway scams:",
             "fake MrBeast branding or likeness, promises of free money/prizes, QR codes or suspicious links,",
             "instructions to click/claim/connect/download, urgency, repeated ad panels, or botnet-style spam.",
             "Do not flag ordinary MrBeast memes, news, fan art, or legitimate discussion without scam solicitation.",
@@ -62,7 +62,7 @@ export async function inspectFourImageScam(message) {
         {
           role: "user",
           content: [
-            { type: "text", text: "Phân loại bộ 4 ảnh Discord này. Chỉ kết luận scam khi bằng chứng trực quan rõ ràng." },
+            { type: "text", text: "Phân loại nhanh ảnh Discord này. Chỉ kết luận scam khi bằng chứng trực quan rõ ràng." },
             ...images.map((attachment) => ({
               type: "image_url",
               image_url: { url: attachment.url },
@@ -76,7 +76,7 @@ export async function inspectFourImageScam(message) {
     const confidence = Math.max(0, Math.min(1, Number(result?.confidence) || 0));
     return {
       checked: true,
-      scam: result?.is_mrbeast_scam === true && confidence >= 0.85,
+      scam: result?.is_mrbeast_scam === true,
       confidence,
       summary: String(result?.summary || "").slice(0, 300),
       signals: Array.isArray(result?.signals) ? result.signals.slice(0, 6).map(String) : [],
