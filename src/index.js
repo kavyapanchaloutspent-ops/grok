@@ -1,10 +1,11 @@
-﻿import {
+import {
   Client,
   GatewayIntentBits,
   Partials,
   Events,
   ActivityType,
   AttachmentBuilder,
+  EmbedBuilder,
 } from "discord.js";
 import { config } from "./config.js";
 import { isLaughing, LAUGH_REPLY } from "./laugh.js";
@@ -18,6 +19,23 @@ import { initMusic, initMusicNodes, updateMusicVoiceState, joinVoice, playMusic,
 import { getBotIdentity } from "./identity.js";
 import { handleDmChatCommand, handleDmChatInteraction } from "./dm-chat.js";
 import { runDiscordInspect } from "./discord-tools.js";
+import { inspectFourImageScam } from "./scam-vision.js";
+
+function splitDiscordText(text, maxLength = 1900) {
+  const remaining = String(text || "").trim();
+  if (!remaining) return [];
+  const chunks = [];
+  let rest = remaining;
+  while (rest.length > maxLength) {
+    let cut = rest.lastIndexOf("\n", maxLength);
+    if (cut < Math.floor(maxLength * 0.55)) cut = rest.lastIndexOf(" ", maxLength);
+    if (cut < Math.floor(maxLength * 0.55)) cut = maxLength;
+    chunks.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) chunks.push(rest);
+  return chunks;
+}
 
 const client = new Client({
   intents: [
@@ -71,6 +89,29 @@ client.on(Events.MessageCreate, async (message) => {
           /\.(png|jpe?g|gif|webp)(\?|$)/i.test(a.url || "")
       ) || false;
 
+    // Bộ 4 ảnh thường được chiến dịch botnet/scam đăng cùng lúc.
+    // Fail-open: Vision lỗi/thiếu key thì không xóa nhầm nội dung người dùng.
+    if (!message.author.bot && message.attachments?.size >= 4) {
+      const scan = await inspectFourImageScam(message);
+      if (scan.scam && message.deletable) {
+        const deleted = await message.delete().then(() => true).catch(() => false);
+        if (deleted) {
+          const detail = scan.summary || scan.signals.join(" · ") || "Phát hiện bộ ảnh quảng cáo tặng tiền giả mạo.";
+          await message.channel.send({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xe53935)
+                .setTitle("Đã lọc 1 MrBeast")
+                .setDescription(`${detail}\nĐộ tin cậy: **${Math.round(scan.confidence * 100)}%**`)
+                .setFooter({ text: `Người gửi: ${message.author.username}` })
+                .setTimestamp(),
+            ],
+            allowedMentions: { parse: [] },
+          }).catch(() => {});
+        }
+        return;
+      }
+    }
     // ── 1) Lệnh .api — quản lý pool API key (staff) ─────────────────
     if (/^\.api\b/i.test(content.trim())) {
       await handleApiCommands(message);
@@ -232,18 +273,22 @@ client.on(Events.MessageCreate, async (message) => {
         ...new Set([message.author.id, ...mentionedBotIds, ...generatedBotIds, ...generatedMemberIds]),
       ].slice(0, 25);
 
-      const replyPayload = {
-        content: replyText,
-        files: files.length ? files : undefined,
-        allowedMentions: {
-          repliedUser: !isBotVar,
-          users: allowedReplyUserIds,
-          parse: [],
-        },
+      const chunks = splitDiscordText(replyText);
+      if (!chunks.length && files.length) chunks.push("👇");
+      const allowedMentions = {
+        repliedUser: !isBotVar,
+        users: allowedReplyUserIds,
+        parse: [],
       };
-      if (isBotVar) await message.channel.send(replyPayload);
-      else await message.reply(replyPayload);
-    } finally {
+      for (let index = 0; index < chunks.length; index += 1) {
+        const replyPayload = {
+          content: chunks[index],
+          files: index === 0 && files.length ? files : undefined,
+          allowedMentions,
+        };
+        if (!isBotVar && index === 0) await message.reply(replyPayload);
+        else await message.channel.send(replyPayload);
+      }    } finally {
       clearInterval(typingTimer);
     }
   } catch (err) {

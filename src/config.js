@@ -31,6 +31,14 @@ export const config = {
     visionModel: process.env.AI_VISION_MODEL || "mistralai/mistral-large-2512",
   },
 
+  /** OpenRouter Vision — tự lọc bộ 4 ảnh quảng cáo MrBeast/scam */
+  openRouter: {
+    apiKey: process.env.OPENROUTER_API_KEY || "",
+    baseURL: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
+    visionModel:
+      process.env.OPENROUTER_VISION_MODEL ||
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+  },
   /** Cloudflare Workers AI — FLUX.1 schnell (tạo ảnh) */
   cf: {
     accountId: process.env.CF_ACCOUNT_ID || "",

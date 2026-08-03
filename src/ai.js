@@ -1,4 +1,4 @@
-﻿import OpenAI from "openai";
+import OpenAI from "openai";
 import { config } from "./config.js";
 import { getHistory, pushHistory, canDeploy, markDeployStart, markDeployEnd } from "./store.js";
 import { generateImage } from "./images.js";
@@ -863,7 +863,7 @@ export async function chatWithAi({
   }
 
   pushHistory(channelId, "assistant", finalText.slice(0, 1500), config.historyLimit);
-  return { text: finalText.slice(0, 1900), images };
+  return { text: finalText, images };
 }
 
 /** Đã TẮT lọc vi phạm — mọi thứ đi thẳng DeepSeek/Grok. Stub để không vỡ import cũ. */
