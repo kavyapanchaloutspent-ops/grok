@@ -28,6 +28,18 @@ try {
 
 /** Cache client theo key — đỡ tạo object mỗi lần */
 const clientCache = new Map();
+let openRouterVisionClient = null;
+
+function getOpenRouterVisionClient() {
+  if (!config.openRouter.apiKey) return null;
+  if (!openRouterVisionClient) {
+    openRouterVisionClient = new OpenAI({
+      apiKey: config.openRouter.apiKey,
+      baseURL: config.openRouter.baseURL,
+    });
+  }
+  return openRouterVisionClient;
+}
 
 /** Timeout mỗi attempt (ms) — fail nhanh để nhảy key, không treo 90s */
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 40_000);
@@ -270,6 +282,7 @@ NHÂN CÁCH DUY NHẤT + MEMORY:
 
 CÔNG CỤ:
 1) look_at_images — mắt (avatar/ảnh).
+   Nếu tool trả ok=false hoặc nói ảnh không tải được/không rõ: PHẢI nói không xem được; CẤM đoán avatar từ URL, thumbnail, tên file, label hay stereotype.
 2) generate_image — vẽ FLUX. Trong bot-var có thể tự tạo ảnh/meme làm đòn đáp nếu thật sự có ý tưởng; hoàn toàn tùy chọn, không gọi cho đủ thủ tục.
 3) deploy_static_site — CHỈ khi backend chưa auto-deploy. Ưu tiên description ngắn; hệ thống gen HTML + Surge.
 4) join_voice — vào đúng phòng voice của người đang nhắn.
@@ -590,34 +603,43 @@ async function runLookAtImagesTool(visionItems, { focus = "all", question = "" }
     .join("\n");
 
   try {
-    const response = await createChat({
-      model: config.ai.visionModel,
-      messages: [
-        {
-          role: "system",
-          content: `You are a silent vision SENSOR (Mistral Large) for Grok. Output factual Vietnamese descriptions only. Never speak as a chatbot, never address the end user.
+    const visionMessages = [
+      {
+        role: "system",
+        content: `You are a silent vision SENSOR for a Discord bot. Output factual Vietnamese descriptions only. Never speak as a chatbot and never address the end user.
 Rules:
-- Start each block with the exact label given (e.g. "AVATAR CỦA NGƯỜI ĐANG NHẮN: ...").
-- author = person currently messaging.
-- mentioned/reply_to = other person.
-- attachment = uploaded image.
+- Start each block with the exact supplied label.
+- author = person currently messaging; mentioned/reply_to = another person; attachment = uploaded image.
+- Describe only pixels actually visible. Never infer appearance from URL, filename, label, username, prior text, or stereotypes.
+- If an image cannot be loaded or is too unclear, output exactly that label followed by "KHÔNG XEM ĐƯỢC ẢNH". Never fabricate.
 No moralizing. No preamble.`,
-        },
-        {
-          role: "user",
-          content: visionUserContent(
-            [
-              question ? `Yêu cầu phân tích: ${question}` : "Mô tả chi tiết từng ảnh.",
-              "DANH SÁCH:",
-              legend,
-            ].join("\n"),
-            items.map((i) => i.url)
-          ),
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 900,
-    });
+      },
+      {
+        role: "user",
+        content: visionUserContent(
+          [
+            question ? `Yêu cầu phân tích: ${question}` : "Mô tả chi tiết từng ảnh.",
+            "DANH SÁCH:",
+            legend,
+          ].join("\n"),
+          items.map((i) => i.url)
+        ),
+      },
+    ];
+    const openRouter = getOpenRouterVisionClient();
+    const response = openRouter
+      ? await openRouter.chat.completions.create({
+          model: config.openRouter.visionModel,
+          messages: visionMessages,
+          temperature: 0.15,
+          max_tokens: 700,
+        })
+      : await createChat({
+          model: config.ai.visionModel,
+          messages: visionMessages,
+          temperature: 0.15,
+          max_tokens: 700,
+        });
 
     const description = response.choices?.[0]?.message?.content?.trim() || "";
     return JSON.stringify({
@@ -626,14 +648,15 @@ No moralizing. No preamble.`,
       count: items.length,
       labels: items.map((i) => ({ kind: i.kind, label: i.label, name: i.name })),
       description,
-      note: "Đây là dữ liệu cảm biến. DeepSeek hãy trả lời user bằng nhân cách của mình, có memory.",
+      note: description.includes("KHÔNG XEM ĐƯỢC ẢNH") ? "Vision không tải/không thấy ảnh. CẤM đoán; hãy nói rõ không xem được." : "Đây là dữ liệu cảm biến thật. Hãy trả lời bằng nhân cách của mình.",
     });
   } catch (err) {
     console.error("[tool look_at_images]", err.message);
     return JSON.stringify({
       ok: false,
-      error: err.message,
-      labels: items.map((i) => ({ kind: i.kind, label: i.label, url: i.url })),
+      error: `Vision không xem được ảnh: ${err.message}`,
+      instruction: "CẤM đoán nội dung/avatar. Hãy nói thẳng với user là không tải được ảnh.",
+      labels: items.map((i) => ({ kind: i.kind, label: i.label })),
     });
   }
 }
