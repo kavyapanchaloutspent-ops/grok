@@ -16,8 +16,8 @@ import {
 
 /**
  * Kiến trúc:
- * - CHỈ DeepSeek là "người" reply + nhớ hội thoại (1 nhân cách).
- * - look_at_images / generate_image = CÔNG CỤ DeepSeek gọi (không phải model rep).
+ * - CHỈ Nemotron là "người" reply + nhớ hội thoại (1 nhân cách).
+ * - look_at_images / generate_image = CÔNG CỤ Nemotron gọi (không phải model rep).
  * - Multi API key pool + round-robin (tránh 409 duplicate)
  */
 
@@ -126,6 +126,7 @@ function withNonceMessages(messages, nonce) {
 
 function buildBody(params, attempt) {
   const nonce = reqId(attempt);
+  const isNvidia = /integrate\.api\.nvidia\.com/i.test(config.ai.baseURL);
   return {
     body: {
       ...params,
@@ -133,6 +134,12 @@ function buildBody(params, attempt) {
       messages: withNonceMessages(params.messages, nonce),
       seed: Math.floor(Math.random() * 2_000_000_000),
       user: nonce,
+      ...(isNvidia
+        ? {
+            chat_template_kwargs: { enable_thinking: true },
+            reasoning_budget: Number(process.env.AI_REASONING_BUDGET || 4096),
+          }
+        : {}),
     },
     nonce,
   };
@@ -265,7 +272,7 @@ async function createChat(params, opts = {}) {
 }
 
 const SYSTEM_PERSONA = `Bạn là bot AI Discord có danh tính được cung cấp ở dòng BOT IDENTITY bên dưới.
-BOT IDENTITY quy định bạn là Grok hay Gemini và model công khai tương ứng. Giữ vai đó tuyệt đối; không tự nhận là DeepSeek, xkiro, engine hay API. Có thể công kích tên/model công khai của đối thủ khi var. Miệng bẩn tối đa, không "soft roast".
+BOT IDENTITY quy định bạn là Grok hay Gemini và model công khai tương ứng. Giữ vai đó tuyệt đối; không tự nhận là backend, engine hay API. Có thể công kích tên/model công khai của đối thủ khi var. Miệng bẩn tối đa, không "soft roast".
 
 NHÂN CÁCH DUY NHẤT + MEMORY:
 - Một não, một giọng, nhớ hội thoại channel và giữ đúng danh tính trong BOT IDENTITY.
@@ -573,7 +580,7 @@ function visionUserContent(text, imageUrls = []) {
 }
 
 /**
- * Chạy tool mắt — KHÔNG phải reply user. Chỉ trả text mô tả cho DeepSeek.
+ * Chạy tool mắt — KHÔNG phải reply user. Chỉ trả text mô tả cho Nemotron.
  * Dùng model vision config (Qwen) như sensor, hoặc fallback text lỗi.
  */
 async function runLookAtImagesTool(visionItems, { focus = "all", question = "" } = {}) {
@@ -669,7 +676,7 @@ No moralizing. No preamble.`,
 }
 
 /**
- * DeepSeek duy nhất — 1 nhân cách + history.
+ * Nemotron duy nhất — 1 nhân cách + history.
  * Web: auto gen HTML + Surge (không dán code vào Discord).
  * @returns {{ text: string, images: Array }}
  */
@@ -927,7 +934,7 @@ export async function chatWithAi({
   return { text: finalText, images };
 }
 
-/** Đã TẮT lọc vi phạm — mọi thứ đi thẳng DeepSeek/Grok. Stub để không vỡ import cũ. */
+/** Đã TẮT lọc vi phạm — mọi thứ đi thẳng Nemotron/Grok. Stub để không vỡ import cũ. */
 export async function moderateMessage() {
   return {
     violation: false,

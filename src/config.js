@@ -24,11 +24,11 @@ export const config = {
   ai: {
     /** Primary key (pool còn load thêm AI_API_KEYS + lệnh .api) */
     apiKey: process.env.AI_API_KEY || process.env.AI_API_KEYS?.split(/[\s,;]+/).filter(Boolean)[0] || "",
-    baseURL: process.env.AI_BASE_URL || "https://api.xkiro.com/v1",
+    baseURL: process.env.AI_BASE_URL || "https://integrate.api.nvidia.com/v1",
     /** Model chính — mọi reply user */
-    model: process.env.AI_MODEL || "deepseek/deepseek-v4-pro",
+    model: process.env.AI_MODEL || "nvidia/nemotron-3-ultra-550b-a55b",
     /** Model phụ — chỉ xem ảnh (vision) — Mistral Large */
-    visionModel: process.env.AI_VISION_MODEL || "mistralai/mistral-large-2512",
+    visionModel: process.env.AI_VISION_MODEL || "nvidia/nemotron-3-ultra-550b-a55b",
   },
 
   /** OpenRouter Vision — tự lọc bộ 4 ảnh quảng cáo MrBeast/scam */

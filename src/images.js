@@ -1,5 +1,5 @@
 /**
- * Cloudflare Workers AI — FLUX.1 schnell (tool phụ cho DeepSeek).
+ * Cloudflare Workers AI — FLUX.1 schnell (tool phụ cho Nemotron).
  * POST /accounts/{id}/ai/run/@cf/black-forest-labs/flux-1-schnell
  */
 

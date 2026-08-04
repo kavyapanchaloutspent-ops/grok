@@ -4,7 +4,7 @@ import { getUserRecord, clearWarnings } from "./store.js";
 
 /**
  * Lọc nội dung vi phạm: ĐÃ TẮT.
- * Toxic / "vi phạm" → index gửi thẳng DeepSeek (Grok 4.5 persona) để chửi.
+ * Toxic / "vi phạm" → index gửi thẳng Nemotron (Grok 4.5 persona) để chửi.
  * File này chỉ còn staff helpers + lệnh !mod tay.
  */
 

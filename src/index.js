@@ -55,9 +55,9 @@ initMusic(client);
 
 client.once(Events.ClientReady, (c) => {
   console.log(`✅ Online: ${c.user.tag}`);
-  console.log(`[vision] provider=${config.openRouter.apiKey ? "OpenRouter" : "xKiro fallback"} model=${config.openRouter.apiKey ? config.openRouter.visionModel : config.ai.visionModel}`);
+  console.log(`[vision] provider=${config.openRouter.apiKey ? "OpenRouter" : "NVIDIA fallback"} model=${config.openRouter.apiKey ? config.openRouter.visionModel : config.ai.visionModel}`);
   const identity = getBotIdentity(c.user.id);
-  c.user.setActivity(`${identity.name} · DeepSeek brain · var all`, {
+  c.user.setActivity(`${identity.name} · Nemotron Ultra brain · var all`, {
     type: ActivityType.Watching,
   });
   initMusicNodes(c.user.id);
