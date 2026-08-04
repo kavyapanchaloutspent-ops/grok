@@ -1,19 +1,10 @@
 import { Riffy } from "riffy";
 
 const NODES = [
-  { name: "Horizxon Singapore", host: "lava1.horizxon.studio", port: 80, password: "horizxon.studio", secure: false },
-  { name: "Horizxon Mumbai", host: "lava4.horizxon.studio", port: 80, password: "horizxon.studio", secure: false },
-  { name: "Horizxon Frankfurt", host: "lava3.horizxon.studio", port: 80, password: "horizxon.studio", secure: false },
-  { name: "Horizxon US West", host: "lava2.horizxon.studio", port: 80, password: "horizxon.studio", secure: false },
   { name: "Serenetia v4 SSL", host: "lavalinkv4.serenetia.com", port: 443, password: "https://dsc.gg/ajidevserver", secure: true },
   { name: "Serenetia v4 Non-SSL", host: "lavalinkv4.serenetia.com", port: 80, password: "https://dsc.gg/ajidevserver", secure: false },
   { name: "Ajieblogs v4 SSL", host: "lava-v4.ajieblogs.eu.org", port: 443, password: "https://dsc.gg/ajidevserver", secure: true },
-  { name: "HeavenCloud", host: "89.106.84.59", port: 4000, password: "heavencloud.in", secure: false },
-  { name: "DevamOP India", host: "lavalink.devamop.in", port: 443, password: "DevamOP", secure: true },
   { name: "Jirayu v4", host: "lavalink.jirayu.net", port: 13592, password: "youshallnotpass", secure: false },
-  { name: "NYX Singapore 1", host: "sg1-nodelink.nyxbot.app", port: 3000, password: "nyxbot.app/support", secure: false },
-  { name: "TriniumHost", host: "lavalink.triniumhost.com", port: 4333, password: "free", secure: false },
-  { name: "Lavalink.rocks v4", host: "v4.lavalink.rocks", port: 443, password: "horizxon.tech", secure: true },
 ];
 
 let riffy;

@@ -202,7 +202,7 @@ async function createChatSerial(params, { retries = 4 } = {}) {
   let lastErr;
   const pool = Math.max(1, getHealthyKeyCount());
   // timeout: thử hết pool + thêm vài vòng
-  const maxAttempts = Math.min(Math.max(retries, pool + 2), 10);
+  const maxAttempts = Math.min(Math.max(retries, getKeyCount() + 2), 30);
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const key = acquireKey();
