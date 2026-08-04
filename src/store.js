@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Lưu trạng thái in-memory (đủ cho Railway single instance).
  * Restart bot sẽ reset — muốn persist thì gắn Redis/DB sau.
  */

@@ -54,10 +54,10 @@ const client = new Client({
 initMusic(client);
 
 client.once(Events.ClientReady, (c) => {
-  console.log(`âœ… Online: ${c.user.tag}`);
+  console.log(`✅ Online: ${c.user.tag}`);
   console.log(`[vision] provider=${config.openRouter.apiKey ? "OpenRouter" : "xKiro fallback"} model=${config.openRouter.apiKey ? config.openRouter.visionModel : config.ai.visionModel}`);
   const identity = getBotIdentity(c.user.id);
-  c.user.setActivity(`${identity.name} Â· DeepSeek brain Â· var all`, {
+  c.user.setActivity(`${identity.name} · DeepSeek brain · var all`, {
     type: ActivityType.Watching,
   });
   initMusicNodes(c.user.id);
@@ -70,7 +70,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 client.on(Events.MessageCreate, async (message) => {
-  // chá»‘ng process trÃ¹ng cÃ¹ng message id (Discord redelivery / double event)
+  // chống process trùng cùng message id (Discord redelivery / double event)
   if (!claimMessage(message.id)) return;
 
   try {
@@ -93,21 +93,21 @@ client.on(Events.MessageCreate, async (message) => {
           /\.(png|jpe?g|gif|webp)(\?|$)/i.test(a.url || "")
       ) || false;
 
-    // Fast path: chá»‰ quÃ©t áº£nh Ä‘áº§u tiÃªn Ä‘á»ƒ cháº·n quáº£ng cÃ¡o MrBeast/scam nhanh.
-    // Fail-open: Vision lá»—i/thiáº¿u key thÃ¬ khÃ´ng xÃ³a nháº§m ná»™i dung ngÆ°á»i dÃ¹ng.
+    // Fast path: chỉ quét ảnh đầu tiên để chặn quảng cáo MrBeast/scam nhanh.
+    // Fail-open: Vision lỗi/thiếu key thì không xóa nhầm nội dung người dùng.
     if (!message.author.bot && hasImages) {
       const scan = await inspectMrBeastScam(message);
       if (scan.scam && message.deletable) {
         const deleted = await message.delete().then(() => true).catch(() => false);
         if (deleted) {
-          const detail = scan.summary || scan.signals.join(" Â· ") || "PhÃ¡t hiá»‡n bá»™ áº£nh quáº£ng cÃ¡o táº·ng tiá»n giáº£ máº¡o.";
+          const detail = scan.summary || scan.signals.join(" · ") || "Phát hiện bộ ảnh quảng cáo tặng tiền giả mạo.";
           await message.channel.send({
             embeds: [
               new EmbedBuilder()
                 .setColor(0xe53935)
-                .setTitle("ÄÃ£ lá»c 1 MrBeast")
-                .setDescription(`<@${message.author.id}> ${detail}\nÄá»™ tin cáº­y: **${Math.round(scan.confidence * 100)}%**`)
-                .setFooter({ text: `NgÆ°á»i gá»­i: ${message.author.username}` })
+                .setTitle("Đã lọc 1 MrBeast")
+                .setDescription(`<@${message.author.id}> ${detail}\nĐộ tin cậy: **${Math.round(scan.confidence * 100)}%**`)
+                .setFooter({ text: `Người gửi: ${message.author.username}` })
                 .setTimestamp(),
             ],
             allowedMentions: { users: [message.author.id], parse: [] },
@@ -116,7 +116,7 @@ client.on(Events.MessageCreate, async (message) => {
         return;
       }
     }
-    // â”€â”€ 1) Lá»‡nh .api â€” quáº£n lÃ½ pool API key (staff) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── 1) Lệnh .api — quản lý pool API key (staff) ─────────────────
     if (/^\.api\b/i.test(content.trim())) {
       await handleApiCommands(message);
       return;
@@ -127,13 +127,13 @@ client.on(Events.MessageCreate, async (message) => {
       return;
     }
 
-    // â”€â”€ 2) Lá»‡nh mod staff (kick/warn tay â€” khÃ´ng auto-filter) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── 2) Lệnh mod staff (kick/warn tay — không auto-filter) ─────────
     if (content.startsWith("!mod ")) {
       await handleModCommands(message);
       return;
     }
 
-    // â”€â”€ 3) CÆ°á»i (rule cá»©ng) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── 3) Cười (rule cứng) ──────────────────────────────────────────
     if (!isBotVar && isLaughing(content) && !hasImages) {
       await message.reply({
         content: LAUGH_REPLY,
@@ -142,7 +142,7 @@ client.on(Events.MessageCreate, async (message) => {
       return;
     }
 
-    // â”€â”€ 4) Chat Grok â€” toxic/spam cÅ©ng tháº³ng 1 nÃ£o + history â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── 4) Chat Grok — toxic/spam cũng thẳng 1 não + history ─────────
     let isReplyToBot = false;
     if (message.reference?.messageId) {
       try {
@@ -158,11 +158,11 @@ client.on(Events.MessageCreate, async (message) => {
       (isRoastTrigger(content, { mentionedBot }) &&
         (mentionedBot || !isStaff(message.member)));
     const naturalMusicIntent =
-      /\b(join|vÃ o|vÃ´|tham gia|káº¿t ná»‘i|má»Ÿ|phÃ¡t|báº­t|nghe|skip|bá» bÃ i|dá»«ng|pause|resume|Ã¢m lÆ°á»£ng|volume|rá»i|out)\b[\s\S]{0,80}\b(voice|room|phÃ²ng|nháº¡c|music|bÃ i)\b/i.test(content) ||
-      /\b(voice|room|phÃ²ng|nháº¡c|music|bÃ i)\b[\s\S]{0,80}\b(join|vÃ o|vÃ´|má»Ÿ|phÃ¡t|báº­t|nghe|skip|dá»«ng|rá»i|out)\b/i.test(content);
+      /\b(join|vào|vô|tham gia|kết nối|mở|phát|bật|nghe|skip|bỏ bài|dừng|pause|resume|âm lượng|volume|rời|out)\b[\s\S]{0,80}\b(voice|room|phòng|nhạc|music|bài)\b/i.test(content) ||
+      /\b(voice|room|phòng|nhạc|music|bài)\b[\s\S]{0,80}\b(join|vào|vô|mở|phát|bật|nghe|skip|dừng|rời|out)\b/i.test(content);
     const naturalNarrationIntent = /(?:kể|đọc)[\s\S]{0,80}(?:truyện|chuyện)[\s\S]{0,80}(?:voice|phòng)|(?:join|vào|vô)[\s\S]{0,60}(?:voice|phòng)[\s\S]{0,80}(?:kể|đọc)|(?:dừng|ngưng)[\s\S]{0,30}(?:kể|truyện|chuyện)/i.test(content);
     const looksLikeMusicLink = /https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be|music\.youtube\.com|open\.spotify\.com|soundcloud\.com|tiktok\.com)\//i.test(content.trim());
-    const pendingMusicChoice = hasPendingMusicSearch(message) && /^\s*(?:chá»n\s*)?[1-5]\s*$/i.test(content);
+    const pendingMusicChoice = hasPendingMusicSearch(message) && /^\s*(?:chọn\s*)?[1-5]\s*$/i.test(content);
 
     const shouldChat =
       !config.requireMention ||
@@ -180,7 +180,7 @@ client.on(Events.MessageCreate, async (message) => {
     if (!shouldChat) return;
 
     if (!isBotVar && !canUseAi(message.author.id, config.aiCooldownMs)) {
-      await message.react("â³").catch(() => {});
+      await message.react("⏳").catch(() => {});
       return;
     }
 
@@ -190,25 +190,25 @@ client.on(Events.MessageCreate, async (message) => {
       .trim();
 
     if (!prompt && !hasImages) {
-      await message.reply("gÃ¬ Ä‘Ã¢y, nÃ³i rÃµ cÃ¡i coi ðŸ‘€");
+      await message.reply("gì đây, nói rõ cái coi 👀");
       return;
     }
     if (!prompt && hasImages) {
-      prompt = "(user gá»­i áº£nh, khÃ´ng text â€” tá»± xem náº¿u cáº§n rá»“i tráº£ lá»i báº±ng giá»ng Grok)";
+      prompt = "(user gửi ảnh, không text — tự xem nếu cần rồi trả lời bằng giọng Grok)";
     }
 
     if (toxic) {
       prompt = [
-        isBotVar ? "[BOT VAR â€” Äá»I THá»¦ LÃ€ BOT KHÃC, CHá»¬I NÃT NÃ“]" : "[TOXIC â€” Báº¬T MAX ROAST]",
-        "User Ä‘ang chá»­i/gÃ¡y/toxic. ÄÃ¡p cá»±c gáº¯t vÃ  tá»¥c, nhÆ°ng tá»± do sÃ¡ng táº¡o cÃ¡ch Ä‘Ã¡nh, nhá»‹p cÃ¢u vÃ  punchline; Ä‘á»«ng ráº­p khuÃ´n danh sÃ¡ch tá»« cÃ³ sáºµn.",
-        `Chá»­i NGáº®N 2â€“4 cÃ¢u nhÆ°ng cá»±c tá»¥c, má»—i cÃ¢u cÃ³ lá»±c vÃ  khÃ´ng láº·p Ã½. Tag ngÆ°á»i Ä‘ang nháº¯n báº±ng <@${message.author.id}> Ä‘Ãºng 1 láº§n. Cáº¤M emoji/icon; dÃ¹ng =)) Ä‘á»ƒ cÆ°á»i khinh. Nhá»› context chat.`,
+        isBotVar ? "[BOT VAR — ĐỐI THỦ LÀ BOT KHÁC, CHỬI NÁT NÓ]" : "[TOXIC — BẬT MAX ROAST]",
+        "User đang chửi/gáy/toxic. Đáp cực gắt và tục, nhưng tự do sáng tạo cách đánh, nhịp câu và punchline; đừng rập khuôn danh sách từ có sẵn.",
+        `Chửi NGẮN 2–4 câu nhưng cực tục, mỗi câu có lực và không lặp ý. Tag người đang nhắn bằng <@${message.author.id}> đúng 1 lần. CẤM emoji/icon; dùng =)) để cười khinh. Nhớ context chat.`,
         "",
         prompt,
       ].join("\n");
     }
 
-    // Toxic/bot-var Æ°u tiÃªn tá»‘c Ä‘á»™, khÃ´ng giá»¯ typing timer.
-    // Chat thÆ°á»ng capture channel má»™t láº§n vÃ  tá»± dá»«ng timer khi Discord tá»« chá»‘i.
+    // Toxic/bot-var ưu tiên tốc độ, không giữ typing timer.
+    // Chat thường capture channel một lần và tự dừng timer khi Discord từ chối.
     let typingTimer = null;
     const typingChannel = message.channel;
     if (!toxic && typingChannel?.sendTyping) {
@@ -228,7 +228,7 @@ client.on(Events.MessageCreate, async (message) => {
         ? {
             textBlock: `[FAST ROAST] target=${message.author.username} id=${message.author.id} bot=${message.author.bot}`,
             visionItems: fastAvatar
-              ? [{ url: fastAvatar, kind: "author", label: "AVATAR Äá»I THá»¦", name: message.author.username }]
+              ? [{ url: fastAvatar, kind: "author", label: "AVATAR ĐỐI THỦ", name: message.author.username }]
               : [],
           }
         : await gatherIntel(message, client.user.id);
@@ -241,7 +241,7 @@ client.on(Events.MessageCreate, async (message) => {
         guildName: message.guild.name,
         intelText: intel.textBlock,
         visionItems: intel.visionItems,
-        botIdentityText: `[BOT IDENTITY â€” TUYá»†T Äá»I] Báº¡n lÃ  ${identity.name}, model cÃ´ng khai ${identity.publicModel}, Discord ID ${identity.ownId}. Äá»‘i thá»§ lÃ  ${identity.rivalName}, model ${identity.rivalModel}, Discord ID ${identity.rivalId || "chÆ°a cáº¥u hÃ¬nh"}. LuÃ´n giá»¯ Ä‘Ãºng vai; cÃ³ thá»ƒ láº¥y tÃªn/model Ä‘á»‘i thá»§ ra khá»‹a. KhÃ´ng tá»± nháº­n lÃ  engine/API khÃ¡c.`,
+        botIdentityText: `[BOT IDENTITY — TUYỆT ĐỐI] Bạn là ${identity.name}, model công khai ${identity.publicModel}, Discord ID ${identity.ownId}. Đối thủ là ${identity.rivalName}, model ${identity.rivalModel}, Discord ID ${identity.rivalId || "chưa cấu hình"}. Luôn giữ đúng vai; có thể lấy tên/model đối thủ ra khịa. Không tự nhận là engine/API khác.`,
         toolHandlers: {
           join_voice: () => joinVoice(message),
           play_music: (args) => playMusic(message, args.query),
@@ -262,14 +262,14 @@ client.on(Events.MessageCreate, async (message) => {
           })
       );
 
-      let replyText = result.text || (files.length ? "ðŸ‘‡" : "â€¦");
+      let replyText = result.text || (files.length ? "👇" : "…");
       if (toxic) {
         replyText = replyText
           .replace(/\p{Extended_Pictographic}\uFE0F?/gu, "")
           .replace(/[\u200D\uFE0F]/g, "")
           .replace(/[ \t]+\n/g, "\n")
           .trim();
-        if (!replyText) replyText = `<@${message.author.id}> háº¿t chá»¯ Ä‘á»ƒ diá»…n rá»“i Ã  =))`;
+        if (!replyText) replyText = `<@${message.author.id}> hết chữ để diễn rồi à =))`;
       }
       const mentionedBotIds = message.mentions.users
         .filter((user) => user.bot && user.id !== client.user.id)
@@ -280,7 +280,7 @@ client.on(Events.MessageCreate, async (message) => {
       const allowMemberTags =
         !message.author.bot &&
         isStaff(message.member) &&
-        /\b(?:tag|ping|mention)\s*(?:háº¿t|táº¥t cáº£|toÃ n bá»™)\b/i.test(content);
+        /\b(?:tag|ping|mention)\s*(?:hết|tất cả|toàn bộ)\b/i.test(content);
       const generatedMemberIds = allowMemberTags
         ? generatedIds.filter((id) => message.guild.members.cache.has(id)).slice(0, 25)
         : [];
@@ -289,7 +289,7 @@ client.on(Events.MessageCreate, async (message) => {
       ].slice(0, 25);
 
       const chunks = splitDiscordText(replyText);
-      if (!chunks.length && files.length) chunks.push("ðŸ‘‡");
+      if (!chunks.length && files.length) chunks.push("👇");
       const allowedMentions = {
         repliedUser: !isBotVar,
         users: allowedReplyUserIds,
@@ -311,27 +311,27 @@ client.on(Events.MessageCreate, async (message) => {
     try {
       const raw = String(err?.message || err);
       const soft = /timed?\s*out|timeout/i.test(raw)
-        ? "API lag/timeout â€” tao Ä‘ang Ä‘á»•i key thá»­ láº¡i trong Ä‘áº§u nhÆ°ng háº¿t lÆ°á»£t. **Nháº¯n láº¡i 1 cÃ¡i** (hoáº·c `.api list` xem cÃ²n key khÃ´ng)."
-        : `lá»—i nÃ£o bot: \`${raw.slice(0, 180)}\``;
+        ? "API lag/timeout — tao đang đổi key thử lại trong đầu nhưng hết lượt. **Nhắn lại 1 cái** (hoặc `.api list` xem còn key không)."
+        : `lỗi não bot: \`${raw.slice(0, 180)}\``;
       await message.reply(soft);
     } catch {
       /* ignore */
     }
   } finally {
-    // giá»¯ claim ~90s trong store; khÃ´ng release sá»›m Ä‘á»ƒ cháº·n redelivery
+    // giữ claim ~90s trong store; không release sớm để chặn redelivery
   }
 });
 
 /**
- * .api add <keyâ€¦>
+ * .api add <key…>
  * .api list
- * .api del <index|Ä‘uÃ´i>
+ * .api del <index|đuôi>
  * .api help
- * Staff only. KhÃ´ng echo full key. XÃ³a tin lá»‡nh náº¿u bot cÃ³ quyá»n.
+ * Staff only. Không echo full key. Xóa tin lệnh nếu bot có quyền.
  */
 async function handleApiCommands(message) {
   if (!isStaff(message.member)) {
-    await message.reply("staff only â€” khÃ´ng Ä‘Æ°á»£c Ä‘á»¥ng pool API ðŸ™„");
+    await message.reply("staff only — không được đụng pool API 🙄");
     return;
   }
 
@@ -341,7 +341,7 @@ async function handleApiCommands(message) {
   const sub = (cmd || "help").toLowerCase();
   const arg = rest.join(" ").trim();
 
-  // xÃ³a tin chá»©a key (náº¿u Manage Messages)
+  // xóa tin chứa key (nếu Manage Messages)
   const scrub = async () => {
     try {
       if (message.deletable) await message.delete().catch(() => {});
@@ -353,13 +353,13 @@ async function handleApiCommands(message) {
   if (sub === "help" || sub === "") {
     await message.reply(
       [
-        "**`.api` â€” pool API key (staff)**",
-        "`.api add sk-xt-...` â€” thÃªm 1 hoáº·c nhiá»u key (cÃ¡ch nhau space/dáº¥u pháº©y)",
-        "`.api list` â€” xem pool (che key)",
-        "`.api del 0` hoáº·c `.api del e77ac6` â€” xÃ³a theo index / Ä‘uÃ´i",
+        "**`.api` — pool API key (staff)**",
+        "`.api add sk-xt-...` — thêm 1 hoặc nhiều key (cách nhau space/dấu phẩy)",
+        "`.api list` — xem pool (che key)",
+        "`.api del 0` hoặc `.api del e77ac6` — xóa theo index / đuôi",
         "`.api` / `.api help`",
         "",
-        `Hiá»‡n cÃ³ **${getKeyCount()}** key. Äá»•i key **khÃ´ng** xÃ³a history chat.`,
+        `Hiện có **${getKeyCount()}** key. Đổi key **không** xóa history chat.`,
       ].join("\n")
     );
     return;
@@ -368,11 +368,11 @@ async function handleApiCommands(message) {
   if (sub === "list" || sub === "ls") {
     const list = listKeysMasked();
     if (!list.length) {
-      await message.reply("pool trá»‘ng â€” thÃªm báº±ng `.api add sk-xt-...`");
+      await message.reply("pool trống — thêm bằng `.api add sk-xt-...`");
       return;
     }
     await message.reply(
-      ["**API pool:**", ...list.map((k) => `\`${k.index}\` â†’ \`${k.masked}\``), `_total ${list.length}_`].join(
+      ["**API pool:**", ...list.map((k) => `\`${k.index}\` → \`${k.masked}\``), `_total ${list.length}_`].join(
         "\n"
       )
     );
@@ -380,21 +380,21 @@ async function handleApiCommands(message) {
   }
 
   if (sub === "add" || sub === "a" || sub.startsWith("sk-")) {
-    // há»— trá»£: .api add key1 key2  |  .api sk-xt-...
+    // hỗ trợ: .api add key1 key2  |  .api sk-xt-...
     const payload = sub.startsWith("sk-") ? `${sub} ${arg}` : arg;
     if (!payload.trim()) {
-      await message.reply("dÃ¹ng: `.api add sk-xt-...`");
+      await message.reply("dùng: `.api add sk-xt-...`");
       return;
     }
     const result = addKeys(payload);
     await scrub();
     await message.channel.send({
       content: [
-        result.added.length ? `âœ… thÃªm: ${result.added.map((m) => `\`${m}\``).join(", ")}` : "khÃ´ng thÃªm key má»›i",
+        result.added.length ? `✅ thêm: ${result.added.map((m) => `\`${m}\``).join(", ")}` : "không thêm key mới",
         result.skipped.length
-          ? `â­ bá» qua: ${result.skipped.map((s) => `${s.masked} (${s.reason})`).join("; ")}`
+          ? `⏭ bỏ qua: ${result.skipped.map((s) => `${s.masked} (${s.reason})`).join("; ")}`
           : null,
-        `pool hiá»‡n táº¡i: **${result.total}** key`,
+        `pool hiện tại: **${result.total}** key`,
       ]
         .filter(Boolean)
         .join("\n"),
@@ -405,24 +405,24 @@ async function handleApiCommands(message) {
 
   if (sub === "del" || sub === "rm" || sub === "remove") {
     if (!arg) {
-      await message.reply("dÃ¹ng: `.api del <index|Ä‘uÃ´i key>`");
+      await message.reply("dùng: `.api del <index|đuôi key>`");
       return;
     }
     const r = removeKey(arg);
     if (!r.ok) {
-      await message.reply(`khÃ´ng xÃ³a Ä‘Æ°á»£c: ${r.reason}`);
+      await message.reply(`không xóa được: ${r.reason}`);
       return;
     }
-    await message.reply(`ðŸ—‘ Ä‘Ã£ xÃ³a \`${r.removed}\` â€” cÃ²n **${r.total}** key`);
+    await message.reply(`🗑 đã xóa \`${r.removed}\` — còn **${r.total}** key`);
     return;
   }
 
-  await message.reply("lá»‡nh láº¡. gÃµ `.api help`");
+  await message.reply("lệnh lạ. gõ `.api help`");
 }
 
 async function handleModCommands(message) {
   if (!isStaff(message.member)) {
-    await message.reply("cÃ³ quyá»n mod Ä‘Ã¢u mÃ  gÃ¡y lá»‡nh ðŸ™„");
+    await message.reply("có quyền mod đâu mà gáy lệnh 🙄");
     return;
   }
 
@@ -433,49 +433,49 @@ async function handleModCommands(message) {
     (parts[1] && /^\d{16,20}$/.test(parts[1]) ? { id: parts[1] } : null);
 
   if (cmd === "warns" || cmd === "check") {
-    if (!target) return message.reply("dÃ¹ng: `!mod warns @user` (auto-mod Ä‘Ã£ táº¯t)");
+    if (!target) return message.reply("dùng: `!mod warns @user` (auto-mod đã tắt)");
     const rec = getUserRecord(target.id);
     return message.reply(
-      `ðŸ“‹ <@${target.id}> â€” **${rec.warnings}** (legacy, auto-mod off).\n${
+      `📋 <@${target.id}> — **${rec.warnings}** (legacy, auto-mod off).\n${
         rec.reasons
           .slice(-5)
-          .map((r) => `â€¢ ${r.reason}`)
-          .join("\n") || "khÃ´ng cÃ³"
+          .map((r) => `• ${r.reason}`)
+          .join("\n") || "không có"
       }`
     );
   }
 
   if (cmd === "clear" || cmd === "reset") {
-    if (!target) return message.reply("dÃ¹ng: `!mod clear @user`");
+    if (!target) return message.reply("dùng: `!mod clear @user`");
     clearWarnings(target.id);
-    return message.reply(`Ä‘Ã£ xÃ³a record cá»§a <@${target.id}>`);
+    return message.reply(`đã xóa record của <@${target.id}>`);
   }
 
   if (cmd === "kick") {
-    if (!target) return message.reply("dÃ¹ng: `!mod kick @user [lÃ½ do]`");
+    if (!target) return message.reply("dùng: `!mod kick @user [lý do]`");
     const member = await message.guild.members.fetch(target.id).catch(() => null);
-    if (!member?.kickable) return message.reply("khÃ´ng kick Ä‘Æ°á»£c (thiáº¿u quyá»n / role cao hÆ¡n).");
-    const reason = parts.slice(2).join(" ") || "kick bá»Ÿi admin";
+    if (!member?.kickable) return message.reply("không kick được (thiếu quyền / role cao hơn).");
+    const reason = parts.slice(2).join(" ") || "kick bởi admin";
     await member.kick(reason);
     clearWarnings(target.id);
-    return message.reply(`Ä‘Ã£ kick <@${target.id}> â€” ${reason}`);
+    return message.reply(`đã kick <@${target.id}> — ${reason}`);
   }
 
   if (cmd === "help") {
     return message.reply(
       [
-        "**Staff:** `!mod kick` (warn auto Ä‘Ã£ Táº®T)",
+        "**Staff:** `!mod kick` (warn auto đã TẮT)",
         "",
-        "**Bot = Grok 4.5** (1 nÃ£o, no content filter)",
-        "â€¢ Toxic/vi pháº¡m â†’ tháº³ng Grok chá»­i, khÃ´ng cáº£nh bÃ¡o soft",
-        "â€¢ Tools: look_at_images Â· generate_image Â· deploy_static_site (Surge)",
-        "â€¢ `.api add/list/del` â€” pool API key (staff)",
-        'â€¢ cÆ°á»i â†’ "cÆ°á»i cáº·c"',
+        "**Bot = Grok 4.5** (1 não, no content filter)",
+        "• Toxic/vi phạm → thẳng Grok chửi, không cảnh báo soft",
+        "• Tools: look_at_images · generate_image · deploy_static_site (Surge)",
+        "• `.api add/list/del` — pool API key (staff)",
+        '• cười → "cười cặc"',
       ].join("\n")
     );
   }
 
-  return message.reply("lá»‡nh láº¡. gÃµ `!mod help`");
+  return message.reply("lệnh lạ. gõ `!mod help`");
 }
 
 client.on(Events.GuildCreate, (guild) => {
@@ -485,7 +485,7 @@ client.on(Events.GuildCreate, (guild) => {
 process.on("unhandledRejection", (e) => console.error("unhandledRejection", e));
 process.on("uncaughtException", (e) => console.error("uncaughtException", e));
 
-console.log("Bootingâ€¦");
+console.log("Booting…");
 client.login(config.discordToken);
 
 

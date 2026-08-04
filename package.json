@@ -1,7 +1,7 @@
-﻿{
+{
     "name":  "discord-ai-modbot",
     "version":  "1.0.0",
-    "description":  "Bot Discord quáº£n lÃ½ server báº±ng AI â€” chat tá»± nhiÃªn, moderation, phÃ¡t hiá»‡n cÆ°á»i",
+    "description":  "Bot Discord quản lý server bằng AI — chat tự nhiên, moderation, phát hiện cười",
     "main":  "src/index.js",
     "type":  "module",
     "scripts":  {

@@ -25,7 +25,7 @@ async function runSession(session) {
         await playResource(session.player, createAudioResource(Readable.from(audio.buffer), { inputType: StreamType.OggOpus }));
       }
     }
-    if (!session.stopped) await session.textChannel.send(`Đã kể xong **${session.minutes} phút** truyện “${session.topic}”.`).catch(()=>{});
+    if (!session.stopped) await session.textChannel.send(`Đã kể xong **${session.minutes} phút** truyện "${session.topic}".`).catch(()=>{});
   } catch (error) {
     console.error("[narration]", error);
     await session.textChannel.send(`Kể chuyện bị dừng: ${String(error.message||error).slice(0,180)}`).catch(()=>{});

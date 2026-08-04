@@ -53,7 +53,7 @@ Cooldown-limit: `SURGE_COOLDOWN_MS` (mặc định 60s/user), 1 deploy tại m�
 | **Tool mắt** | `look_at_images` → sensor **Mistral Large** `mistralai/mistral-large-2512` |
 | **Tool vẽ** | `generate_image` → Cloudflare FLUX.1 schnell |
 
-Không có “mode chửi” tách model / system prompt khác. Chửi cũng là DeepSeek + cùng history channel.
+Không có "mode chửi" tách model / system prompt khác. Chửi cũng là DeepSeek + cùng history channel.
 
 Env tạo ảnh: `CF_ACCOUNT_ID`, `CF_API_TOKEN`, `CF_FLUX_STEPS` (mặc định 4).
 

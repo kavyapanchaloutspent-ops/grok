@@ -1,4 +1,4 @@
-﻿export const GROK_BOT_ID = "1517889877281079396";
+export const GROK_BOT_ID = "1517889877281079396";
 export const GEMINI_BOT_ID = "1521100686773715025";
 
 export function getBotIdentity(currentId) {

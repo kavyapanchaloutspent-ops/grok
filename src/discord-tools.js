@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits } from "discord.js";
 
 function userSummary(user) {
   if (!user) return null;
