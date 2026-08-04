@@ -1,4 +1,4 @@
-﻿import {
+import {
   Client,
   GatewayIntentBits,
   Partials,
@@ -20,6 +20,8 @@ import { getBotIdentity } from "./identity.js";
 import { handleDmChatCommand, handleDmChatInteraction } from "./dm-chat.js";
 import { runDiscordInspect } from "./discord-tools.js";
 import { inspectMrBeastScam } from "./scam-vision.js";
+import { startNarration, stopNarration } from "./narration.js";
+import { identifyLyrics } from "./lyrics.js";
 import { handleVoiceCommand, sendVietnameseVoiceMessage } from "./voice-message.js";
 
 function splitDiscordText(text, maxLength = 1900) {
@@ -158,6 +160,7 @@ client.on(Events.MessageCreate, async (message) => {
     const naturalMusicIntent =
       /\b(join|vÃ o|vÃ´|tham gia|káº¿t ná»‘i|má»Ÿ|phÃ¡t|báº­t|nghe|skip|bá» bÃ i|dá»«ng|pause|resume|Ã¢m lÆ°á»£ng|volume|rá»i|out)\b[\s\S]{0,80}\b(voice|room|phÃ²ng|nháº¡c|music|bÃ i)\b/i.test(content) ||
       /\b(voice|room|phÃ²ng|nháº¡c|music|bÃ i)\b[\s\S]{0,80}\b(join|vÃ o|vÃ´|má»Ÿ|phÃ¡t|báº­t|nghe|skip|dá»«ng|rá»i|out)\b/i.test(content);
+    const naturalNarrationIntent = /(?:kể|đọc)[\s\S]{0,80}(?:truyện|chuyện)[\s\S]{0,80}(?:voice|phòng)|(?:join|vào|vô)[\s\S]{0,60}(?:voice|phòng)[\s\S]{0,80}(?:kể|đọc)|(?:dừng|ngưng)[\s\S]{0,30}(?:kể|truyện|chuyện)/i.test(content);
     const looksLikeMusicLink = /https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be|music\.youtube\.com|open\.spotify\.com|soundcloud\.com|tiktok\.com)\//i.test(content.trim());
     const pendingMusicChoice = hasPendingMusicSearch(message) && /^\s*(?:chá»n\s*)?[1-5]\s*$/i.test(content);
 
@@ -167,6 +170,7 @@ client.on(Events.MessageCreate, async (message) => {
       isReplyToBot ||
       toxic ||
       naturalMusicIntent ||
+      naturalNarrationIntent ||
       looksLikeMusicLink ||
       pendingMusicChoice ||
       (hasImages && mentionedBot) ||
@@ -245,6 +249,9 @@ client.on(Events.MessageCreate, async (message) => {
           control_music: (args) => controlMusic(message, args.action, args.value),
           discord_inspect: (args) => runDiscordInspect(message, args),
           speak_voice: (args) => sendVietnameseVoiceMessage(message.channel.id, args.text, { gender: args.gender }),
+          narrate_voice: (args) => startNarration(message, args),
+          stop_narration: () => stopNarration(message.guild.id),
+          identify_lyrics: (args) => identifyLyrics(message, args.url),
         },
       });
 

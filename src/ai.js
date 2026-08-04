@@ -1,4 +1,4 @@
-﻿import OpenAI from "openai";
+import OpenAI from "openai";
 import { config } from "./config.js";
 import { getHistory, pushHistory, canDeploy, markDeployStart, markDeployEnd } from "./store.js";
 import { generateImage } from "./images.js";
@@ -301,6 +301,9 @@ QUAN TRá»ŒNG Vá»€ WEB:
 Báº¡n luÃ´n output cuá»‘i. BOT IDENTITY lÃ  nguá»“n danh tÃ­nh cao nháº¥t.`;
 
 const TOOLS = [
+  { type: "function", function: { name: "narrate_voice", description: "Bắt đầu kể chuyện dài trực tiếp và liên tục trong phòng voice của user. Dùng khi user yêu cầu join voice kể truyện; hỗ trợ tối đa 60 phút và tự giữ mạch truyện qua nhiều chương.", parameters: { type: "object", properties: { topic: { type: "string", description: "Chủ đề, thể loại, nhân vật hoặc yêu cầu câu chuyện." }, duration_minutes: { type: "integer", minimum: 1, maximum: 60 }, gender: { type: "string", enum: ["female", "male"] } }, required: ["topic", "duration_minutes"] } } },
+  { type: "function", function: { name: "stop_narration", description: "Dừng phiên kể chuyện đang phát trong voice khi user yêu cầu dừng/ngưng kể.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "identify_lyrics", description: "Nhận diện bài hát từ link YouTube/TikTok bằng metadata audio node rồi đối chiếu cơ sở dữ liệu lời. Dùng khi user hỏi tên bài, nhận diện lyric/lời từ link; không dùng để phát nhạc.", parameters: { type: "object", properties: { url: { type: "string", description: "URL YouTube hoặc TikTok nguyên bản." } }, required: ["url"] } } },
   { type: "function", function: { name: "speak_voice", description: "Tạo và gửi Voice Message Discord thật bằng giọng đọc tiếng Việt khi user yêu cầu gửi voice, nói hoặc đọc thành tiếng.", parameters: { type: "object", properties: { text: { type: "string", description: "Nội dung tiếng Việt cần đọc, tối đa khoảng 900 ký tự." }, gender: { type: "string", enum: ["female", "male"], description: "Giọng nữ hoặc nam; mặc định nữ." } }, required: ["text"] } } },
   {
     type: "function",
@@ -800,7 +803,7 @@ export async function chatWithAi({
 
         let toolResult = "";
 
-        if (name === "join_voice" || name === "play_music" || name === "select_music" || name === "control_music" || name === "discord_inspect" || name === "speak_voice") {
+        if (name === "join_voice" || name === "play_music" || name === "select_music" || name === "control_music" || name === "discord_inspect" || name === "speak_voice" || name === "narrate_voice" || name === "stop_narration" || name === "identify_lyrics") {
           try {
             const handler = toolHandlers[name];
             if (!handler) throw new Error("Music tool chÆ°a sáºµn sÃ ng.");
@@ -950,3 +953,19 @@ export function quickHeuristicFlags() {
 
 
 
+
+export async function generateStoryChapter({ topic, continuity = "", previousEnding = "", chapter = 1 }) {
+  const response = await createChatSerial({
+    model: config.ai.model,
+    temperature: 0.82,
+    max_tokens: 2600,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: "Bạn là biên kịch kiêm người kể chuyện Việt Nam chuyên nghiệp. Viết để đọc thành tiếng: tự nhiên, giàu không khí, không tiêu đề chen giữa lời kể. Giữ tuyệt đối tên nhân vật, luật thế giới, thời gian và các chi tiết đã thiết lập. Mỗi chương 2500-4000 ký tự. Trả JSON đúng dạng {\"narration\":\"...\",\"continuity\":\"tóm tắt cô đọng nhân vật, bí mật, diễn biến và móc nối chương sau\"}. Không kết thúc truyện trừ khi được báo đây là chương cuối." },
+      { role: "user", content: `Chủ đề/yêu cầu: ${topic}\nChương: ${chapter}\nStory bible hiện tại: ${continuity || "chưa có"}\nĐoạn kết chương trước: ${previousEnding || "mở đầu truyện"}\nViết chương tiếp theo liền mạch, có cao trào nhỏ và móc nối tự nhiên.` }
+    ]
+  }, { retries: 4 });
+  const raw=String(response.choices?.[0]?.message?.content||"").trim();
+  try { const data=JSON.parse(raw); if(data.narration)return {narration:String(data.narration),continuity:String(data.continuity||continuity)}; } catch {}
+  return { narration: raw || "Đêm ấy, mọi thứ bắt đầu bằng một tiếng gõ cửa rất khẽ.", continuity };
+}

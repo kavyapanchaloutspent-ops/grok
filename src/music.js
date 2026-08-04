@@ -1,4 +1,4 @@
-﻿import { Riffy } from "riffy";
+import { Riffy } from "riffy";
 
 const NODES = [
   { name: "Horizxon Singapore", host: "lava1.horizxon.studio", port: 80, password: "horizxon.studio", secure: false },
@@ -137,3 +137,16 @@ export async function controlMusic(message, action, value) {
 
 
 
+
+export async function releaseMusicForNarration(guildId) {
+  const player = getPlayer(guildId);
+  if (player) { try { player.destroy(); } catch {} }
+  return { ok: true };
+}
+
+export async function resolveTrackMetadata(message, query) {
+  const clean=String(query||"").trim(); if(!clean)throw new Error("Thiếu link cần nhận diện.");
+  const result=await riffy.resolve({query:clean,requester:message.author}); const track=result?.tracks?.[0];
+  if(!track)throw new Error("Node không nhận diện được audio từ link này.");
+  return {title:track.info.title||"Unknown",author:track.info.author||"Unknown",length:track.info.length||0,uri:track.info.uri||clean,sourceName:track.info.sourceName||"unknown",pluginInfo:track.pluginInfo||{}};
+}
