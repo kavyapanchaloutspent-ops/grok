@@ -5,9 +5,11 @@ import { generateImage } from "./images.js";
 import { deployToSurge, redactSecrets } from "./surge.js";
 import {
   acquireKey,
-  rotateKey,
   shouldRotateOnError,
   getKeyCount,
+  getHealthyKeyCount,
+  reportKeyFailure,
+  reportKeySuccess,
   initKeyPool,
   maskKey,
 } from "./keys.js";
@@ -150,7 +152,8 @@ async function oneShot(params, key, attempt, timeoutMs) {
  */
 async function createChatRace(params) {
   const t0 = Date.now();
-  const keys = [acquireKey(), acquireKey()];
+  const firstKey = acquireKey();
+  const keys = [firstKey, acquireKey([firstKey])];
   const errors = [];
 
   return await new Promise((resolve, reject) => {
@@ -165,6 +168,7 @@ async function createChatRace(params) {
           if (done) return;
           const { res } = await oneShot(params, key, i, AI_TIMEOUT_MS);
           if (!done) {
+            reportKeySuccess(key);
             done = true;
             console.log(
               `[ai] race win key=${maskKey(key)} ${Date.now() - t0}ms`
@@ -172,6 +176,7 @@ async function createChatRace(params) {
             resolve(res);
           }
         } catch (err) {
+          reportKeyFailure(key, err);
           errors.push(err);
           const msg = String(err?.message || err).slice(0, 80);
           console.warn(`[ai] race lose key=${maskKey(key)}: ${msg}`);
@@ -195,7 +200,7 @@ async function createChatRace(params) {
  */
 async function createChatSerial(params, { retries = 4 } = {}) {
   let lastErr;
-  const pool = Math.max(1, getKeyCount());
+  const pool = Math.max(1, getHealthyKeyCount());
   // timeout: thử hết pool + thêm vài vòng
   const maxAttempts = Math.min(Math.max(retries, pool + 2), 10);
 
@@ -206,11 +211,13 @@ async function createChatSerial(params, { retries = 4 } = {}) {
 
     try {
       const { res } = await oneShot(params, key, attempt, timeoutMs);
+      reportKeySuccess(key);
       if (attempt > 0) {
         console.log(`[ai] ok after retry a${attempt} key=${maskKey(key)}`);
       }
       return res;
     } catch (err) {
+      reportKeyFailure(key, err);
       lastErr = err;
       const msg = String(err?.message || err).slice(0, 120);
       const dupe = isDuplicate409(err);
@@ -225,11 +232,6 @@ async function createChatSerial(params, { retries = 4 } = {}) {
 
       if (!isRetryable(err) && attempt >= 1) throw err;
       if (attempt >= maxAttempts - 1) break;
-
-      // timeout / 409 / 401 / 429 → nhảy key ngay
-      if (pool > 1 && (tout || dupe || rate || shouldRotateOnError(err))) {
-        rotateKey(tout ? "timeout" : dupe ? "409" : rate ? "429" : msg);
-      }
 
       // chờ ngắn — timeout không sleep lâu (đã tốn 40s)
       const wait = tout
@@ -251,7 +253,7 @@ async function createChatSerial(params, { retries = 4 } = {}) {
  */
 async function createChat(params, opts = {}) {
   const hasTools = Array.isArray(params.tools) && params.tools.length > 0;
-  if (!hasTools && getKeyCount() >= 2 && opts.race !== false) {
+  if (!hasTools && getHealthyKeyCount() >= 2 && opts.race !== false) {
     try {
       return await createChatRace(params);
     } catch (e) {
